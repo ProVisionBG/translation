@@ -6,4 +6,6 @@ return [
     'button' => 'Load',
     'google' => 'Google Translate',
     'delete' => 'Delete',
+    'fetch_button' => 'Fetch from files',
+    'dump_button' => 'Dump to files'
 ];
