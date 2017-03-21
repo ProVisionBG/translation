@@ -1,0 +1,28 @@
+{
+  "name": "provision/translation",
+  "description": "ProVision Administration translation module",
+  "keywords": [
+    "provision",
+    "module",
+    "translation",
+    "localization",
+    "database"
+  ],
+  "license": "Apache License 2.0",
+  "authors": [
+    {
+      "name": "Venelin Iliev",
+      "homepage": "http://veneliniliev.com"
+    }
+  ],
+  "require": {
+    "php": ">=5.4.0",
+    "stichoza/google-translate-php": "~3.2",
+    "provision/administration": "dev-master || v0.4.x-dev"
+  },
+  "autoload": {
+    "psr-4": {
+      "ProVision\\Translation\\": "src"
+    }
+  }
+}
