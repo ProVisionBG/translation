@@ -91,13 +91,10 @@ class ServiceProvider extends \Illuminate\Translation\TranslationServiceProvider
 
     public function boot()
     {
-//        $this->publishes([
-//            __DIR__ . '/../database/migrations/' => database_path('/migrations'),
-//        ], 'migrations');
 
-        $this->publishes([
-            __DIR__ . '/../config/translation.php' => config_path('provision/translation.php'),
-        ], 'config');
+//        $this->publishes([
+//            __DIR__ . '/../config/translation.php' => config_path('provision/translation.php'),
+//        ], 'config');
 
         $this->loadViewsFrom(__DIR__ . '/../views', 'translation');
 
@@ -105,8 +102,6 @@ class ServiceProvider extends \Illuminate\Translation\TranslationServiceProvider
         $this->publishes([
             __DIR__ . '/../resources/lang' => resource_path('lang/vendor/provision/translation'),
         ], 'lang');
-
-        $this->loadRoutesFrom(__DIR__ . '/routes/web.php');
 
         $this->app['translation.database']->addNamespace(null, null);
 

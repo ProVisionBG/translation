@@ -8,6 +8,13 @@ class DatabaseLoader implements LoaderInterface
 
     protected $_app = null;
 
+    /**
+     * All of the namespace hints.
+     *
+     * @var array
+     */
+    protected $hints = [];
+
     public function __construct(Application $app)
     {
         $this->_app = $app;
@@ -42,6 +49,7 @@ class DatabaseLoader implements LoaderInterface
      */
     public function addNamespace($namespace, $hint)
     {
+        $this->hints[$namespace] = $hint;
     }
 
     /**
@@ -51,32 +59,57 @@ class DatabaseLoader implements LoaderInterface
      *
      * @param string $locale
      * @param string $group
-     * @param string $name
+     * @param $key
+     * @param $namespace
      * @return void
+     * @internal param string $name
      */
-    public function addTranslation($locale, $group, $key)
+    public function addTranslation($locale, $group, $key, $namespace)
     {
         if (!\Config::get('app.debug') || \Config::get('provision.translation.minimal')) {
             return;
         }
 
-        // Extract the real key from the translation.
-        if (preg_match("/^{$group}\.(.*?)$/sm", $key, $match)) {
-            $name = $match[1];
+        $package = false;
+
+        if (strpos($key, '::')) {
+            //use package
+            if (preg_match('/^(?P<package>([a-z0-9_\-]*))::(?P<group>[a-z0-9_\-]*)\.(?P<name>[a-z0-9_\-]*)/x', $key, $regs)) {
+                $package = $regs['package'];
+                $group = $regs['group'];
+                $name = $regs['name'];
+            } else {
+                throw new TranslationException('Could not extract key from translation package (namespace).');
+            }
+
+        } elseif (preg_match('/^(?P<group>[a-z0-9_\-]*)\.(?P<name>[a-z0-9_\-]*)$/', $key, $regs)) {
+            $group = $regs['group'];
+            $name = $regs['name'];
         } else {
-            throw new TranslationException('Could not extract key from translation.');
+            return;
+            //throw new TranslationException('Could not extract key from translation.');
         }
 
-        $item = \DB::connection(env('DB_CONNECTION_TRANSLATIONS'))->table('translations')
+        $q = \DB::connection(env('DB_CONNECTION_TRANSLATIONS'))->table('translations')
             ->where('locale', $locale)
             ->where('group', $group)
-            ->where('name', $name)->first();
+            ->where('name', $name);
+
+        if ($package) {
+            $q->where('package', $package);
+        }
+
+        $item = $q->first();
 
         $data = compact('locale', 'group', 'name');
         $data = array_merge($data, [
             'viewed_at' => date_create(),
             'updated_at' => date_create(),
         ]);
+
+        if ($package) {
+            $data['package'] = $package;
+        }
 
         if ($item === null) {
             $data = array_merge($data, [
@@ -100,5 +133,6 @@ class DatabaseLoader implements LoaderInterface
      */
     public function namespaces()
     {
+        return $this->hints;
     }
 }

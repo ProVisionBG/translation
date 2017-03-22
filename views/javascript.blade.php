@@ -107,6 +107,9 @@
 
         $scope.fetchCommand = function ($index) {
             return $http.post("{{ Administration::route('translations.fetch-command') }}")
+                .success(function () {
+                    $scope.getGroups();
+                })
                 .error(function (data, status, headers, config) {
                     $scope.setMessage(status, 'danger');
                 });
@@ -134,10 +137,14 @@
             $scope.setMessage(status, 'danger');
         });
 
-        $http.get("{{ Administration::route('translations.groups') }}").success(function (data) {
-            $scope.groups = data;
-        }).error(function (data, status, headers, config) {
-            $scope.setMessage(status, 'danger');
-        });
+        $scope.getGroups = function () {
+            $http.get("{{ Administration::route('translations.groups') }}").success(function (data) {
+                $scope.groups = data;
+            }).error(function (data, status, headers, config) {
+                $scope.setMessage(status, 'danger');
+            });
+        }
+        $scope.getGroups();
+
     }])
 </script>

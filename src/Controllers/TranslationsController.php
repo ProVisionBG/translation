@@ -11,15 +11,6 @@ use Stichoza\GoogleTranslate\TranslateClient;
 class TranslationsController extends Controller
 {
 
-    public function __construct()
-    {
-        // Disable the Laravel Debugbar
-        $app = app();
-        if ($app->offsetExists('debugbar') && $app['config']->get('provision.translation.disable_debugbar')) {
-            $app['debugbar']->disable();
-        }
-    }
-
     public function getIndex()
     {
         return view('translation::index');
@@ -33,8 +24,6 @@ class TranslationsController extends Controller
             ->orderBy('group');
 
         return $query->get();
-
-        return ServiceProvider::pluckOrLists($query, 'group');
     }
 
     public function getLocales()
