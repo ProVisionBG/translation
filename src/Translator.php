@@ -58,6 +58,19 @@ class Translator extends \Illuminate\Translation\Translator
         return $line;
     }
 
+    /**
+     * Get the array of locales to be checked.
+     *
+     * Compatibility with laravel 5.4
+     *
+     * @param  string|null $locale
+     * @return array
+     */
+    protected function parseLocale($locale)
+    {
+        return array_filter([$locale ?: $this->locale, $this->fallback]);
+    }
+
     public function load($namespace, $group, $locale)
     {
         if ($this->isLoaded($namespace, $group, $locale)) return;
