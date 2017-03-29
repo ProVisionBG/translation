@@ -28,7 +28,7 @@ class DumpCommand extends Command
      */
     public function fire()
     {
-        $query = \DB::connection(env('DB_CONNECTION_TRANSLATIONS'))->table('translations')->select('locale', 'group', 'name', 'value', 'package', 'vendor');
+        $query = \DB::connection(env('DB_CONNECTION_TRANSLATIONS'))->table('translations')->select('locale', 'group', 'name', 'value', 'package', 'vendor', 'module');
         $this->addOptionToQuery($query, 'locale');
         $this->addOptionToQuery($query, 'group');
         $results = $query->get();
@@ -36,15 +36,22 @@ class DumpCommand extends Command
         // Reorder the data
         $dump = [];
         $vendorsData = [];
+        $modulesData = [];
         foreach ($results as $result) {
-            if (!$result->vendor && !$result->package) {
+            if (!$result->vendor && !$result->package && !$result->module) {
                 $dump[$result->locale][$result->group][$result->name] = $result->value;
-            } else {
+            } elseif ($result->vendor && $result->package && !$result->module) {
                 $vendorsData[$result->vendor][$result->package][$result->locale][$result->group][$result->name] = $result->value;
+            } elseif ($result->module) {
+                $modulesData[$result->module][$result->locale][$result->group][$result->name] = $result->value;
+            } else {
+                $this->error(print_r($result, true));
             }
         }
+
         $this->write($dump);
         $this->writeVendors($vendorsData);
+        $this->writeModules($modulesData);
     }
 
     /**
@@ -101,9 +108,13 @@ class DumpCommand extends Command
      * @param $content
      * @param $locale
      * @param $group
+     * @param $date
+     * @param bool $vendor
+     * @param bool $package
+     * @param bool $module
      * @return string
      */
-    protected function getFileTemplate($content, $locale, $group, $date, $vendor = false, $package = false)
+    protected function getFileTemplate($content, $locale, $group, $date, $vendor = false, $package = false, $module = false)
     {
         $content = $this->convertToOrderedNestedArray($content);
 
@@ -117,6 +128,7 @@ class DumpCommand extends Command
 // Vendor: {$vendor}
 // Package: {$package}
 // Date: {$date}
+// Module: {$module}
 return {$array_text};
 EOF;
         return $data;
@@ -215,6 +227,41 @@ EOF;
                 }
             }
         }
+
+    }
+
+    protected function writeModules($data)
+    {
+        if (!is_array($data)) {
+            return false;
+        }
+
+        foreach ($data as $module => $dump) {
+            $lang_path = config('modules.path') . DIRECTORY_SEPARATOR . $module . DIRECTORY_SEPARATOR . 'Resources' . DIRECTORY_SEPARATOR . 'Lang';
+            $date = date_create()->format('Y-m-d H:i:s');
+
+            foreach ($dump as $locale => $groups) {
+
+                foreach ($groups as $group => $content) {
+                    $path = $lang_path . DIRECTORY_SEPARATOR . $locale;
+                    if (!\File::exists($path)) {
+                        \File::makeDirectory($path, 0755, true);
+                    }
+
+                    $file = $path . "/{$group}.php";
+                    $content = $this->fixNulledValues($content);
+                    $data = $this->getFileTemplate($content, $locale, $group, $date, false, false, $module);
+
+                    // Display the results
+                    if (\File::put($file, $data)) {
+                        $this->info("Dumped: {$file}");
+                    } else {
+                        $this->error("Failed to dump: {$file}");
+                    }
+                }
+            }
+        }
+
 
     }
 

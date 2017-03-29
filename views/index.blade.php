@@ -43,8 +43,8 @@
 
         <div class="col-md-3">
             <select ng-model="currentGroup" ng-change="clear()" class="form-control">
-                <option value="[[group]]" ng-repeat="group in groups">[[ group.package ]]::[[group.group]]
-                    ([[group.vendor]])
+                <option value="[[group]]" ng-repeat="group in groups">
+                    [[ group.label ]]
                 </option>
             </select>
         </div>

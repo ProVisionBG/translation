@@ -78,6 +78,7 @@
                 'group': group.group,
                 'vendor': group.vendor,
                 'package': group.package,
+                'module': group.module,
 
                 'locale': $scope.currentLocale,
                 'translate': $scope.currentEditable
@@ -97,7 +98,8 @@
                 'locale': $scope.currentEditable,
                 'group': group.group,
                 'vendor': group.vendor,
-                'package': group.package
+                'package': group.package,
+                'module': group.module
             })
                 .error(function (data, status, headers, config) {
                     $scope.setMessage(status, 'danger');
@@ -138,8 +140,26 @@
         });
 
         $scope.getGroups = function () {
+            $scope.groups = [];
             $http.get("{{ Administration::route('translations.groups') }}").success(function (data) {
-                $scope.groups = data;
+                angular.forEach(data, function (val) {
+                    val.label = val.group;
+
+                    if (val.module) {
+                        val.label = '(module: ' + val.module + ') ' + val.label;
+                    }
+
+                    if (val.package) {
+                        val.label = '(package: ' + val.package + ') ' + val.label;
+                    }
+
+                    if (val.vendor) {
+                        val.label = '(vendor: ' + val.vendor + ') ' + val.label;
+                    }
+                    
+                    $scope.groups.push(val);
+                });
+                //$scope.groups = data;
             }).error(function (data, status, headers, config) {
                 $scope.setMessage(status, 'danger');
             });

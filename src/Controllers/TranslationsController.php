@@ -19,7 +19,7 @@ class TranslationsController extends Controller
     public function getGroups()
     {
         $query = \DB::connection(env('DB_CONNECTION_TRANSLATIONS'))->table('translations')
-            ->select('group', 'vendor', 'package')
+            ->select('group', 'vendor', 'package', 'module')
             ->distinct()
             ->orderBy('group');
 
@@ -61,6 +61,12 @@ class TranslationsController extends Controller
             $q->whereNull('vendor');
         }
 
+        if ($request->has('module')) {
+            $q->where('module', $request->module);
+        } else {
+            $q->whereNull('module');
+        }
+
         //dd($request->all());
         $base = $q->get();
 
@@ -80,6 +86,12 @@ class TranslationsController extends Controller
             $new->where('vendor', $request->vendor);
         } else {
             $new->whereNull('vendor');
+        }
+
+        if ($request->has('module')) {
+            $new->where('module', $request->module);
+        } else {
+            $new->whereNull('module');
         }
 
         $new = ServiceProvider::pluckOrLists($new, 'value', 'name');
@@ -115,6 +127,12 @@ class TranslationsController extends Controller
             $q->whereNull('vendor');
         }
 
+        if ($request->has('module')) {
+            $q->where('module', $request->module);
+        } else {
+            $q->whereNull('module');
+        }
+
         $item = $q->first();
 
         $data = [
@@ -131,6 +149,10 @@ class TranslationsController extends Controller
 
         if ($request->has('vendor')) {
             $data['vendor'] = $request->vendor;
+        }
+
+        if ($request->has('module')) {
+            $data['module'] = $request->module;
         }
 
         if ($item === null) {

@@ -16,6 +16,7 @@ class AddTranslationsTable extends Migration
         Schema::create('translations', function (Blueprint $table) {
             $table->increments('id');
             $table->string('locale');
+            $table->string('module')->nullable()->default(null);
             $table->string('package')->nullable()->default(null);
             $table->string('vendor')->nullable()->default(null);
             $table->string('group');
