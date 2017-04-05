@@ -14,7 +14,7 @@ class FetchCommand extends Command
      *
      * @var string
      */
-    protected $signature = 'translation:fetch {--U|update : Update values in database from file}';
+    protected $signature = 'translation:fetch {--U|update : Update values in database from file} {--locale=} {--group=}';
 
     /**
      * The console command description.
