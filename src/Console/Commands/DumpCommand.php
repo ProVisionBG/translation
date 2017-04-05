@@ -45,7 +45,7 @@ class DumpCommand extends Command
             } elseif ($result->module) {
                 $modulesData[$result->module][$result->locale][$result->group][$result->name] = $result->value;
             } else {
-                $this->error(print_r($result, true));
+                $this->error('Unknown translate DB row: ' + print_r($result, true));
             }
         }
 

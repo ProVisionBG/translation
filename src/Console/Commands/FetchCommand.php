@@ -14,7 +14,7 @@ class FetchCommand extends Command
      *
      * @var string
      */
-    protected $name = 'translation:fetch';
+    protected $signature = 'translation:fetch {--U|update : Update values in database from file}';
 
     /**
      * The console command description.
@@ -43,24 +43,24 @@ class FetchCommand extends Command
             return false;
         }
 
-//        $locales = $this->usableLocales();
-//        foreach ($locales as $locale) {
-//            $groups = $this->usableGroups($locale);
-//            foreach ($groups as $group) {
-//                $this->storeGroup($locale, $group);
-//            }
-//        }
+        $locales = $this->usableLocales();
+        foreach ($locales as $locale) {
+            $groups = $this->usableGroups($locale);
+            foreach ($groups as $group) {
+                $this->storeGroup($locale, $group);
+            }
+        }
 
         /*
          * vendors
          */
-//        $vendors = File::directories($this->lang_path . '/vendor');
-//        foreach ($vendors as $vendor) {
-//            $packages = File::directories($vendor);
-//            foreach ($packages as $package) {
-//                $this->storeVendorPackage($vendor, $package);
-//            }
-//        }
+        $vendors = File::directories($this->lang_path . '/vendor');
+        foreach ($vendors as $vendor) {
+            $packages = File::directories($vendor);
+            foreach ($packages as $package) {
+                $this->storeVendorPackage($vendor, $package);
+            }
+        }
 
         /*
          * Modules
@@ -148,124 +148,6 @@ class FetchCommand extends Command
         return $result;
     }
 
-    protected function storeModule($module)
-    {
-        $langPath = config('modules.path') . DIRECTORY_SEPARATOR . $module['name'] . DIRECTORY_SEPARATOR . 'Resources' . DIRECTORY_SEPARATOR . 'Lang' . DIRECTORY_SEPARATOR;
-
-        foreach ($this->getLocales() as $locale) {
-            $moduleLocaleDir = $langPath . $locale;
-
-            if (!File::exists($moduleLocaleDir)) {
-                continue;
-            }
-
-            $groups = \File::files($moduleLocaleDir);
-            foreach ($groups as &$group) {
-                $group = basename($group, '.php');
-
-                $keys = require $moduleLocaleDir . DIRECTORY_SEPARATOR . $group . '.php';
-                $keys = $this->flattenArray($keys);
-                $updated = 0;
-                $inserted = 0;
-                foreach ($keys as $name => $value) {
-                    list($inserted, $updated) = $this->storeTranslation($locale, $group, $name, $value, $inserted, $updated, false, false, $module['name']);
-                }
-
-                $this->flushCache($locale, $group);
-
-                $this->info("Fetched Modules/{$module['name']}/Resources/Lang/{$locale}/{$group}.php [New: {$inserted}, Updated: {$updated}]");
-            }
-
-
-        }
-    }
-
-    protected function flattenArray($keys, $prefix = '')
-    {
-        $result = [];
-        foreach ($keys as $key => $value) {
-            if (is_array($value)) {
-                $result = array_merge($result, $this->flattenArray($value, $prefix . $key . ' . '));
-            } else {
-                $result[$prefix . $key] = $value;
-            }
-        }
-        return $result;
-    }
-
-    /**
-     * @param $locale
-     * @param $group
-     * @param $name
-     * @param $value
-     * @param $inserted
-     * @param $updated
-     * @param bool $vendor
-     * @param bool $package
-     * @return array
-     */
-    protected function storeTranslation($locale, $group, $name, $value, $inserted, $updated, $vendor = false, $package = false, $module = false)
-    {
-        $q = \DB::connection(env('DB_CONNECTION_TRANSLATIONS'))->table('translations')
-            ->where('locale', $locale)
-            ->where('group', $group)
-            ->where('name', $name);
-
-        if ($vendor) {
-            $q->where('vendor', $vendor);
-        }
-
-        if ($package) {
-            $q->where('package', $package);
-        }
-
-        if ($module) {
-            $q->where('module', $module);
-        }
-
-        $item = $q->first();
-
-        $data = compact('locale', 'group', 'name', 'value');
-
-        if ($vendor) {
-            $data['vendor'] = $vendor;
-        }
-
-        if ($package) {
-            $data['package'] = $package;
-        }
-
-        if ($module) {
-            $data['module'] = $module;
-        }
-
-        $data = array_merge($data, [
-            'updated_at' => date_create(),
-        ]);
-
-        if ($item === null) {
-            $data = array_merge($data, [
-                'created_at' => date_create(),
-            ]);
-            \DB::connection(env('DB_CONNECTION_TRANSLATIONS'))->table('translations')->insert($data);
-            $inserted++;
-            return array($inserted, $updated);
-        } else {
-            \DB::connection(env('DB_CONNECTION_TRANSLATIONS'))->table('translations')->where('id', $item->id)->update($data);
-            $updated++;
-            return array($inserted, $updated);
-        }
-    }
-
-    /**
-     * @param $locale
-     * @param $group
-     */
-    protected function flushCache($locale, $group)
-    {
-        \Cache::forget('__translations . ' . $locale . ' . ' . $group);
-    }
-
     /**
      * @return array|null
      */
@@ -349,6 +231,99 @@ class FetchCommand extends Command
         $this->info("Fetched {$locale}/{$group}.php [New: {$inserted}, Updated: {$updated}]");
     }
 
+    protected function flattenArray($keys, $prefix = '')
+    {
+        $result = [];
+        foreach ($keys as $key => $value) {
+            if (is_array($value)) {
+                $result = array_merge($result, $this->flattenArray($value, $prefix . $key . ' . '));
+            } else {
+                $result[$prefix . $key] = $value;
+            }
+        }
+        return $result;
+    }
+
+    /**
+     * @param $locale
+     * @param $group
+     * @param $name
+     * @param $value
+     * @param $inserted
+     * @param $updated
+     * @param bool $vendor
+     * @param bool $package
+     * @return array
+     */
+    protected function storeTranslation($locale, $group, $name, $value, $inserted, $updated, $vendor = false, $package = false, $module = false)
+    {
+        $q = \DB::connection(env('DB_CONNECTION_TRANSLATIONS'))->table('translations')
+            ->where('locale', $locale)
+            ->where('group', $group)
+            ->where('name', $name);
+
+        if ($vendor) {
+            $q->where('vendor', $vendor);
+        }
+
+        if ($package) {
+            $q->where('package', $package);
+        }
+
+        if ($module) {
+            $q->where('module', $module);
+        }
+
+        $item = $q->first();
+
+        $data = compact('locale', 'group', 'name', 'value');
+
+        if ($vendor) {
+            $data['vendor'] = $vendor;
+        }
+
+        if ($package) {
+            $data['package'] = $package;
+        }
+
+        if ($module) {
+            $data['module'] = $module;
+        }
+
+        $data = array_merge($data, [
+            'updated_at' => date_create(),
+        ]);
+
+        if ($item === null) {
+            $data = array_merge($data, [
+                'created_at' => date_create(),
+            ]);
+            \DB::connection(env('DB_CONNECTION_TRANSLATIONS'))->table('translations')->insert($data);
+            $inserted++;
+            return array($inserted, $updated);
+        } else {
+
+            /*
+             * Дали да ъпдейтва стойностите от файла в базата данни?
+             */
+            if ($this->option('update')) {
+                \DB::connection(env('DB_CONNECTION_TRANSLATIONS'))->table('translations')->where('id', $item->id)->update($data);
+                $updated++;
+            }
+
+            return array($inserted, $updated);
+        }
+    }
+
+    /**
+     * @param $locale
+     * @param $group
+     */
+    protected function flushCache($locale, $group)
+    {
+        \Cache::forget('__translations . ' . $locale . ' . ' . $group);
+    }
+
     protected function storeVendorPackage($vendor, $package)
     {
         $vendor = basename($vendor);
@@ -385,6 +360,38 @@ class FetchCommand extends Command
         }
 
 
+    }
+
+    protected function storeModule($module)
+    {
+        $langPath = config('modules.path') . DIRECTORY_SEPARATOR . $module['name'] . DIRECTORY_SEPARATOR . 'Resources' . DIRECTORY_SEPARATOR . 'Lang' . DIRECTORY_SEPARATOR;
+
+        foreach ($this->getLocales() as $locale) {
+            $moduleLocaleDir = $langPath . $locale;
+
+            if (!File::exists($moduleLocaleDir)) {
+                continue;
+            }
+
+            $groups = \File::files($moduleLocaleDir);
+            foreach ($groups as &$group) {
+                $group = basename($group, '.php');
+
+                $keys = require $moduleLocaleDir . DIRECTORY_SEPARATOR . $group . '.php';
+                $keys = $this->flattenArray($keys);
+                $updated = 0;
+                $inserted = 0;
+                foreach ($keys as $name => $value) {
+                    list($inserted, $updated) = $this->storeTranslation($locale, $group, $name, $value, $inserted, $updated, false, false, $module['name']);
+                }
+
+                $this->flushCache($locale, $group);
+
+                $this->info("Fetched Modules/{$module['name']}/Resources/Lang/{$locale}/{$group}.php [New: {$inserted}, Updated: {$updated}]");
+            }
+
+
+        }
     }
 
     protected function cleanLocaleDir($item)
