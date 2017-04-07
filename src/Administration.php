@@ -8,6 +8,7 @@
 namespace ProVision\Translation;
 
 use Illuminate\Support\Facades\Route;
+use Kris\LaravelFormBuilder\Form;
 use ProVision\Administration\Contracts\Module;
 
 class Administration implements Module
@@ -78,5 +79,16 @@ class Administration implements Module
             'target' => '_blank'
         ]);
 
+    }
+
+    /**
+     * Add settings in administration panel
+     * @param $module
+     * @param Form $form
+     * @return mixed
+     */
+    public function settings($module, Form $form)
+    {
+        // TODO: Implement settings() method.
     }
 }
