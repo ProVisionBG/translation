@@ -2,9 +2,9 @@
 
 use Illuminate\Database\Query\Builder;
 use Illuminate\Translation\FileLoader;
+use ProVision\Translation\Middleware\Injector;
 
-class ServiceProvider extends \Illuminate\Translation\TranslationServiceProvider
-{
+class ServiceProvider extends \Illuminate\Translation\TranslationServiceProvider {
 
     /**
      * Indicates if loading of the provider is deferred.
@@ -22,13 +22,13 @@ class ServiceProvider extends \Illuminate\Translation\TranslationServiceProvider
      * Alternative pluck to stay backwards compatible with Laravel 5.1 LTS.
      *
      * @param Builder $query
-     * @param $column
-     * @param null $key
+     * @param         $column
+     * @param null    $key
+     *
      * @return array|mixed
      * @deprecated да го разкарам това
      */
-    public static function pluckOrLists(Builder $query, $column, $key = null)
-    {
+    public static function pluckOrLists(Builder $query, $column, $key = null) {
         if (\Illuminate\Foundation\Application::VERSION < '5.2') {
             $result = $query->lists($column, $key);
         } else {
@@ -43,8 +43,7 @@ class ServiceProvider extends \Illuminate\Translation\TranslationServiceProvider
      *
      * @return void
      */
-    public function register()
-    {
+    public function register() {
         $this->mergeConfigFrom(__DIR__ . '/../config/translation.php', 'provision/translation');
 
         $this->registerDatabase();
@@ -68,10 +67,11 @@ class ServiceProvider extends \Illuminate\Translation\TranslationServiceProvider
             return $trans;
         });
 
+        $this->app['router']->pushMiddlewareToGroup('web', Injector::class);
+
     }
 
-    protected function registerDatabase()
-    {
+    protected function registerDatabase() {
         $this->app->singleton('translation.database', function ($app) {
             return new DatabaseLoader($app);
         });
@@ -82,15 +82,13 @@ class ServiceProvider extends \Illuminate\Translation\TranslationServiceProvider
      *
      * @return void
      */
-    protected function registerLoader()
-    {
+    protected function registerLoader() {
         $this->app->singleton('translation.loader', function ($app) {
             return new FileLoader($app['files'], $app['path.lang']);
         });
     }
 
-    public function boot()
-    {
+    public function boot() {
 
 //        $this->publishes([
 //            __DIR__ . '/../config/translation.php' => config_path('provision/translation.php'),
@@ -113,8 +111,11 @@ class ServiceProvider extends \Illuminate\Translation\TranslationServiceProvider
      *
      * @return array
      */
-    public function provides()
-    {
-        return array('translator', 'translation.loader', 'translation.database');
+    public function provides() {
+        return array(
+            'translator',
+            'translation.loader',
+            'translation.database'
+        );
     }
 }

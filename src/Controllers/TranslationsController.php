@@ -8,16 +8,13 @@ use ProVision\Translation\ServiceProvider;
 use ProVision\Translation\TranslationException;
 use Stichoza\GoogleTranslate\TranslateClient;
 
-class TranslationsController extends Controller
-{
+class TranslationsController extends Controller {
 
-    public function getIndex()
-    {
+    public function getIndex() {
         return view('translation::index');
     }
 
-    public function getGroups()
-    {
+    public function getGroups() {
         $query = \DB::connection(env('DB_CONNECTION_TRANSLATIONS'))->table('translations')
             ->select('group', 'vendor', 'package', 'module')
             ->distinct()
@@ -26,8 +23,7 @@ class TranslationsController extends Controller
         return $query->get();
     }
 
-    public function getLocales()
-    {
+    public function getLocales() {
 //        $query = \DB::connection(env('DB_CONNECTION_TRANSLATIONS'))->table('translations')
 //            ->select('locale')
 //            ->distinct()
@@ -37,8 +33,7 @@ class TranslationsController extends Controller
         return array_keys(Administration::getLanguages());
     }
 
-    public function postItems(Request $request)
-    {
+    public function postItems(Request $request) {
         if (strlen($request->get('translate')) == 0) {
             throw new TranslationException();
         }
@@ -108,8 +103,7 @@ class TranslationsController extends Controller
         return $base;
     }
 
-    public function postStore(Request $request)
-    {
+    public function postStore(Request $request) {
         $q = \DB::connection(env('DB_CONNECTION_TRANSLATIONS'))->table('translations')
             ->where('locale', strtolower($request->get('locale')))
             ->where('group', $request->get('group'))
@@ -170,8 +164,71 @@ class TranslationsController extends Controller
         return 'OK';
     }
 
-    public function postTranslate(Request $request)
-    {
+    public function postStoreQuick(Request $request) {
+
+        $inputData = $request->all();
+
+        $q = \DB::connection(env('DB_CONNECTION_TRANSLATIONS'))->table('translations')
+            ->where('locale', strtolower($inputData['data']['locale']))
+            ->where('group', $inputData['data']['group'])
+            ->where('name', $inputData['data']['item']);
+
+        if ($request->has('package')) {
+            $q->where('package', $request->package);
+        } else {
+            $q->whereNull('package');
+        }
+
+        if ($request->has('vendor')) {
+            $q->where('vendor', $request->vendor);
+        } else {
+            $q->whereNull('vendor');
+        }
+
+        if ($request->has('module')) {
+            $q->where('module', $request->module);
+        } else {
+            $q->whereNull('module');
+        }
+
+        $item = $q->first();
+
+        $data = [
+            'locale' => strtolower($inputData['data']['locale']),
+            'group' => $inputData['data']['group'],
+            'name' => $inputData['data']['item'],
+            'value' => $inputData['value'],
+            'updated_at' => date_create(),
+        ];
+
+        if ($request->has('package')) {
+            $data['package'] = $request->package;
+        }
+
+        if ($request->has('vendor')) {
+            $data['vendor'] = $request->vendor;
+        }
+
+        if ($request->has('module')) {
+            $data['module'] = $request->module;
+        }
+
+        if ($item === null) {
+            $data = array_merge($data, [
+                'created_at' => date_create(),
+            ]);
+            $result = \DB::connection(env('DB_CONNECTION_TRANSLATIONS'))->table('translations')->insert($data);
+        } else {
+            $result = \DB::connection(env('DB_CONNECTION_TRANSLATIONS'))->table('translations')->where('id', $item->id)->update($data);
+        }
+
+        if (!$result) {
+            throw new TranslationException('Database error...');
+        }
+        return 'OK';
+    }
+
+    public function postTranslate(Request $request) {
 //        $text = TranslateClient::translate($request->input('origin'), $request->input('target'), $request->input('text'));
 //        $key  = $request->input('key');
 //        return compact('key', 'text');
@@ -183,22 +240,19 @@ class TranslationsController extends Controller
         return compact('key', 'text');
     }
 
-    public function postDelete(Request $request)
-    {
+    public function postDelete(Request $request) {
         \DB::connection(env('DB_CONNECTION_TRANSLATIONS'))->table('translations')
             ->where('name', strtolower($request->get('name')))->delete();
         return 'OK';
     }
 
-    public function fetchCommand()
-    {
+    public function fetchCommand() {
         Artisan::call('translation:fetch');
 
         return 'OK';
     }
 
-    public function dumpCommand()
-    {
+    public function dumpCommand() {
         Artisan::call('translation:dump');
 
         return 'OK';

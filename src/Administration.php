@@ -11,10 +11,8 @@ use Illuminate\Support\Facades\Route;
 use Kris\LaravelFormBuilder\Form;
 use ProVision\Administration\Contracts\Module;
 
-class Administration implements Module
-{
-    public function routes($module)
-    {
+class Administration implements Module {
+    public function routes($module) {
         Route::group([
             'namespace' => 'ProVision\Translation\Controllers',
             'prefix' => 'translations',
@@ -44,6 +42,14 @@ class Administration implements Module
                 'as' => 'translations.store',
             ]);
 
+            Route::match([
+                'post',
+                'get'
+            ], '/store-quick', [
+                'uses' => 'TranslationsController@postStoreQuick',
+                'as' => 'translations.store-quick',
+            ]);
+
             Route::post('/translate', [
                 'uses' => 'TranslationsController@postTranslate',
                 'as' => 'translations.translate',
@@ -66,13 +72,11 @@ class Administration implements Module
         });
     }
 
-    public function dashboard($module)
-    {
+    public function dashboard($module) {
         //
     }
 
-    public function menu($module)
-    {
+    public function menu($module) {
         \AdministrationMenu::addSystem(trans('administration::index.translates'), [
             'icon' => 'globe',
             'route' => \ProVision\Administration\Facades\Administration::routeName('translations.index'),
@@ -83,12 +87,13 @@ class Administration implements Module
 
     /**
      * Add settings in administration panel
-     * @param $module
+     *
+     * @param      $module
      * @param Form $form
+     *
      * @return mixed
      */
-    public function settings($module, Form $form)
-    {
+    public function settings($module, Form $form) {
         // TODO: Implement settings() method.
     }
 }
