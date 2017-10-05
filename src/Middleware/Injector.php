@@ -12,6 +12,7 @@ use File;
 use Illuminate\Contracts\Foundation\Application;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Session;
+use ProVision\Administration\Facades\Settings;
 
 class Injector {
     /**
@@ -45,7 +46,19 @@ class Injector {
     public function handle($request, Closure $next) {
         $response = $next($request);
 
-        if (!Auth::guard(config('provision_administration.guard'))->check() || \ProVision\Administration\Facades\Administration::routeInAdministration()) {
+        /**
+         * Stop for json request
+         */
+        if ($request->isJson()) {
+            return $response;
+        }
+
+        /**
+         * Ако не е логнат като админ
+         * ако не е в админа
+         * и ако е пуснат лайв транслейт
+         */
+        if (!Auth::guard(config('provision_administration.guard'))->check() || \ProVision\Administration\Facades\Administration::routeInAdministration() || !Settings::get('live_translate')) {
             return $response;
         }
 
