@@ -1,8 +1,8 @@
 <?php namespace ProVision\Translation;
-;
 
 use Illuminate\Contracts\Foundation\Application;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Config;
 use Illuminate\Translation\LoaderInterface;
 use ProVision\Administration\Facades\Settings;
 
@@ -59,14 +59,17 @@ class Translator extends \Illuminate\Translation\Translator {
     }
 
     public function load($namespace, $group, $locale) {
-        if ($this->isLoaded($namespace, $group, $locale)) return;
+        if ($this->isLoaded($namespace, $group, $locale)) {
+            return;
+        }
 
         // If a Namespace is give the Filesystem will be used
         // otherwise we'll use our database.
         // This will allow legacy support.
         if (!self::isNamespaced($namespace)) {
+
             // If debug is off then cache the result forever to ensure high performance.
-            if (!\Config::get('app.debug') || \Config::get('provision.translation.minimal')) {
+            if (!Config::get('app.debug') || Config::get('provision.translation.minimal')) {
                 $that = $this;
                 $lines = \Cache::rememberForever('__translations.' . $locale . '.' . $group, function () use ($that, $locale, $group, $namespace) {
                     return $that->loadFromDatabase($namespace, $group, $locale);
@@ -77,9 +80,10 @@ class Translator extends \Illuminate\Translation\Translator {
         } else {
             $lines = $this->loader->load($locale, $group, $namespace);
         }
+
         $this->loaded[$namespace][$group][$locale] = $lines;
     }
-
+    
     protected static function isNamespaced($namespace) {
         return !(is_null($namespace) || $namespace == '*');
     }
@@ -94,7 +98,7 @@ class Translator extends \Illuminate\Translation\Translator {
     protected function loadFromDatabase($namespace, $group, $locale) {
         $lines = $this->database->load($locale, $group, $namespace);
 
-        if (count($lines) == 0 && \Config::get('provision.translation.file_fallback', false)) {
+        if (count($lines) == 0 && Config::get('provision.translation.file_fallback', true)) {
             $lines = $this->loader->load($locale, $group, $namespace);
             return $lines;
         }

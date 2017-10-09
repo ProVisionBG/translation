@@ -21,5 +21,5 @@ return [
      * exists in the database, a file will never be used.
      * To use some files, keep these groups fully out of your database.
      */
-    'file_fallback' => false,
+    'file_fallback' => true,
 ];
