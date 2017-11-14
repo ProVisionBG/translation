@@ -23,5 +23,14 @@
     "psr-4": {
       "ProVision\\Translation\\": "src"
     }
+  },
+  "extra": {
+    "laravel": {
+      "providers": [
+        "ProVision\\Translation\\ServiceProvider"
+      ],
+      "aliases": {
+      }
+    }
   }
 }
