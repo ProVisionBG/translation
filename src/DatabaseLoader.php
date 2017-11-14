@@ -3,8 +3,7 @@
 use Illuminate\Contracts\Foundation\Application;
 use Illuminate\Contracts\Translation\Loader;
 
-class DatabaseLoader implements Loader
-{
+class DatabaseLoader implements Loader {
 
     protected $_app = null;
 
@@ -15,8 +14,7 @@ class DatabaseLoader implements Loader
      */
     protected $hints = [];
 
-    public function __construct(Application $app)
-    {
+    public function __construct(Application $app) {
         $this->_app = $app;
     }
 
@@ -26,10 +24,10 @@ class DatabaseLoader implements Loader
      * @param  string $locale
      * @param  string $group
      * @param  string $namespace
+     *
      * @return array
      */
-    public function load($locale, $group, $namespace = null)
-    {
+    public function load($locale, $group, $namespace = null) {
         $query = \DB::connection(env('DB_CONNECTION_TRANSLATIONS'))->table('translations')
             ->where('locale', $locale)
             ->where('group', $group);
@@ -45,10 +43,10 @@ class DatabaseLoader implements Loader
      *
      * @param  string $namespace
      * @param  string $hint
+     *
      * @return void
      */
-    public function addNamespace($namespace, $hint)
-    {
+    public function addNamespace($namespace, $hint) {
         $this->hints[$namespace] = $hint;
     }
 
@@ -59,13 +57,13 @@ class DatabaseLoader implements Loader
      *
      * @param string $locale
      * @param string $group
-     * @param $key
-     * @param $namespace
+     * @param        $key
+     * @param        $namespace
+     *
      * @return void
      * @internal param string $name
      */
-    public function addTranslation($locale, $group, $key, $namespace)
-    {
+    public function addTranslation($locale, $group, $key, $namespace) {
         if (!\Config::get('app.debug') || \Config::get('provision.translation.minimal')) {
             return;
         }
@@ -131,8 +129,18 @@ class DatabaseLoader implements Loader
      *
      * @return void
      */
-    public function namespaces()
-    {
+    public function namespaces() {
         return $this->hints;
+    }
+
+    /**
+     * Add a new JSON path to the loader.
+     *
+     * @param  string $path
+     *
+     * @return void
+     */
+    public function addJsonPath($path) {
+
     }
 }

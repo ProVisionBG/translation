@@ -3,6 +3,7 @@
 use Illuminate\Contracts\Foundation\Application;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Config;
+use Illuminate\Translation\FileLoader;
 use Illuminate\Translation\LoaderInterface;
 use ProVision\Administration\Facades\Settings;
 
@@ -10,7 +11,7 @@ class Translator extends \Illuminate\Translation\Translator {
 
     protected $app = null;
 
-    public function __construct(LoaderInterface $database, LoaderInterface $loader, $locale, Application $app) {
+    public function __construct(DatabaseLoader $database, FileLoader $loader, $locale, Application $app) {
         $this->database = $database;
         $this->app = $app;
         parent::__construct($loader, $locale);
