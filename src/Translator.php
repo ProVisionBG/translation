@@ -3,6 +3,7 @@
 use Illuminate\Contracts\Foundation\Application;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Config;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Translation\FileLoader;
 use Illuminate\Translation\LoaderInterface;
 use ProVision\Administration\Facades\Settings;
@@ -56,6 +57,10 @@ class Translator extends \Illuminate\Translation\Translator {
             }
         }
 
+        if (Config::get('provision.translation.log_missing_keys')) {
+            Log::debug('Missing translation key: ' . $key);
+        }
+
         return $key;
     }
 
@@ -84,7 +89,7 @@ class Translator extends \Illuminate\Translation\Translator {
 
         $this->loaded[$namespace][$group][$locale] = $lines;
     }
-    
+
     protected static function isNamespaced($namespace) {
         return !(is_null($namespace) || $namespace == '*');
     }

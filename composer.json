@@ -17,7 +17,8 @@
   ],
   "require": {
     "php": ">=5.4.0",
-    "stichoza/google-translate-php": "~3.2"
+    "stichoza/google-translate-php": "~3.2",
+    "provision/administration": "v5.5.x-dev"
   },
   "autoload": {
     "psr-4": {
@@ -32,5 +33,7 @@
       "aliases": {
       }
     }
-  }
+  },
+  "minimum-stability": "dev",
+  "prefer-stable": true
 }

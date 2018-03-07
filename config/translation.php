@@ -22,4 +22,14 @@ return [
      * To use some files, keep these groups fully out of your database.
      */
     'file_fallback' => true,
+
+    /**
+     * Throw exception
+     */
+    'throw_exception' => false,
+
+    /**
+     * Log missing keys in error log
+     */
+    'log_missing_keys' => true
 ];
