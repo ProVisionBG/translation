@@ -162,6 +162,9 @@ class TranslationsController extends Controller {
         if (!$result) {
             throw new TranslationException('Database error...');
         }
+
+        Cache::store('file')->forget('__translations.' . $data['locale'] . '.' . $data['group']);
+
         return 'OK';
     }
 

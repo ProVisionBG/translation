@@ -28,9 +28,9 @@
             {{ trans('translation::manager.fetch_button') }}
         </button>
 
-        <button class="btn btn-primary form-control" ng-click="dumpCommand()" promise-btn>
-            {{ trans('translation::manager.dump_button') }}
-        </button>
+        {{--<button class="btn btn-primary form-control" ng-click="dumpCommand()" promise-btn>--}}
+            {{--{{ trans('translation::manager.dump_button') }}--}}
+        {{--</button>--}}
     </div>
 
     <div class="clearfix"></div>
