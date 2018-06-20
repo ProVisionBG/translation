@@ -2,6 +2,7 @@
 
 use Illuminate\Contracts\Foundation\Application;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Translation\FileLoader;
@@ -50,7 +51,7 @@ class Translator extends \Illuminate\Translation\Translator {
         // that will be quick to spot in the UI if language keys are wrong or missing
         // from the application's language files. Otherwise we can return the line.
         if (isset($line)) {
-            if (Auth::guard(config('provision_administration.guard'))->check() && !\ProVision\Administration\Facades\Administration::routeInAdministration() && Settings::get('live_translate')) {
+            if (is_string($line) && Auth::guard(config('provision_administration.guard'))->check() && !\ProVision\Administration\Facades\Administration::routeInAdministration() && Settings::get('live_translate')) {
                 return '<span style="border:1px dashed gray;" class="translate-item" data-namespace="' . $namespace . '" data-item="' . $item . '" data-group="' . $group . '" data-key="' . $key . '" data-locale="' . $locale . '" contenteditable="true">' . $line . '</span>';
             } else {
                 return $line;
@@ -72,12 +73,11 @@ class Translator extends \Illuminate\Translation\Translator {
         // If a Namespace is give the Filesystem will be used
         // otherwise we'll use our database.
         // This will allow legacy support.
-        if (!self::isNamespaced($namespace)) {
-
+        if (self::isNamespaced($namespace)) {
             // If debug is off then cache the result forever to ensure high performance.
             if (!Config::get('app.debug') || Config::get('provision.translation.minimal')) {
                 $that = $this;
-                $lines = \Cache::rememberForever('__translations.' . $locale . '.' . $group, function () use ($that, $locale, $group, $namespace) {
+                $lines = Cache::store('file')->rememberForever('__translations.' . $locale . '.' . $group, function () use ($that, $locale, $group, $namespace) {
                     return $that->loadFromDatabase($namespace, $group, $locale);
                 });
             } else {
@@ -91,7 +91,7 @@ class Translator extends \Illuminate\Translation\Translator {
     }
 
     protected static function isNamespaced($namespace) {
-        return !(is_null($namespace) || $namespace == '*');
+        return $namespace != '*';
     }
 
     /**

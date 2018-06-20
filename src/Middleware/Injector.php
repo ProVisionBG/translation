@@ -80,10 +80,7 @@ class Injector {
                             function(data) {
                               //alert(data);
                             });
-                    } else {
-                       return false;
                     }
-                   
                 });
             });       
         </script>

@@ -2,6 +2,7 @@
 
 use Illuminate\Contracts\Foundation\Application;
 use Illuminate\Contracts\Translation\Loader;
+use Illuminate\Support\Facades\DB;
 
 class DatabaseLoader implements Loader {
 
@@ -28,7 +29,7 @@ class DatabaseLoader implements Loader {
      * @return array
      */
     public function load($locale, $group, $namespace = null) {
-        $query = \DB::connection(env('DB_CONNECTION_TRANSLATIONS'))->table('translations')
+        $query = DB::connection(env('DB_CONNECTION_TRANSLATIONS'))->table('translations')
             ->where('locale', $locale)
             ->where('group', $group);
 

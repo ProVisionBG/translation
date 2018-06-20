@@ -26,7 +26,7 @@ class DumpCommand extends Command
      *
      * @return mixed
      */
-    public function fire()
+    public function handle()
     {
         $query = \DB::connection(env('DB_CONNECTION_TRANSLATIONS'))->table('translations')->select('locale', 'group', 'name', 'value', 'package', 'vendor', 'module');
         $this->addOptionToQuery($query, 'locale');

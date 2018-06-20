@@ -1,7 +1,10 @@
 <?php namespace ProVision\Translation;
 
 use Illuminate\Database\Query\Builder;
+use Illuminate\Support\Facades\Blade;
 use Illuminate\Translation\FileLoader;
+use ProVision\Translation\Console\Commands\DumpCommand;
+use ProVision\Translation\Console\Commands\FetchCommand;
 use ProVision\Translation\Middleware\Injector;
 
 class ServiceProvider extends \Illuminate\Translation\TranslationServiceProvider {
@@ -14,8 +17,8 @@ class ServiceProvider extends \Illuminate\Translation\TranslationServiceProvider
     protected $defer = false;
 
     protected $commands = [
-        'ProVision\Translation\Console\Commands\DumpCommand',
-        'ProVision\Translation\Console\Commands\FetchCommand',
+        DumpCommand::class,
+        FetchCommand::class
     ];
 
     /**
@@ -104,6 +107,13 @@ class ServiceProvider extends \Illuminate\Translation\TranslationServiceProvider
         $this->app['translation.database']->addNamespace(null, null);
 
         \ProVision\Administration\Administration::bootModule('translation', Administration::class);
+
+        Blade::directive('trans_strip', function ($expression) {
+            return trans_strip(str_ireplace("'", '', $expression));
+        });
+        Blade::directive('strip_trans', function ($expression) {
+            return trans_strip(str_ireplace("'", '', $expression));
+        });
     }
 
     /**

@@ -3,6 +3,7 @@
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\Cache;
 use ProVision\Administration\Facades\Administration;
 use ProVision\Translation\ServiceProvider;
 use ProVision\Translation\TranslationException;
@@ -225,6 +226,9 @@ class TranslationsController extends Controller {
         if (!$result) {
             throw new TranslationException('Database error...');
         }
+
+        Cache::store('file')->forget('__translations.' . $data['locale'] . '.' . $data['group']);
+
         return 'OK';
     }
 

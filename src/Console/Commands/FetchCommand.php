@@ -2,12 +2,12 @@
 
 use Caffeinated\Modules\Facades\Module;
 use Illuminate\Console\Command;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\File;
 use ProVision\Administration\Facades\Administration;
 use Symfony\Component\Console\Input\InputOption;
 
-class FetchCommand extends Command
-{
+class FetchCommand extends Command {
 
     /**
      * The console command name.
@@ -26,8 +26,7 @@ class FetchCommand extends Command
     protected $lang_path = null;
     protected $locales = null;
 
-    public function __construct()
-    {
+    public function __construct() {
         $this->lang_path = base_path() . '/resources/lang';
         parent::__construct();
     }
@@ -37,8 +36,7 @@ class FetchCommand extends Command
      *
      * @return mixed
      */
-    public function fire()
-    {
+    public function handle() {
         if (!$this->validate()) {
             return false;
         }
@@ -74,8 +72,7 @@ class FetchCommand extends Command
     /**
      * @return bool
      */
-    protected function validate()
-    {
+    protected function validate() {
         $locale = $this->option('locale');
         if ($locale !== null) {
             if (!$this->hasLocale($locale)) {
@@ -100,10 +97,10 @@ class FetchCommand extends Command
 
     /**
      * @param $locale
+     *
      * @return bool
      */
-    protected function hasLocale($locale)
-    {
+    protected function hasLocale($locale) {
         $result = false;
         if (array_search($locale, $this->getLocales()) !== false) {
             $result = true;
@@ -114,13 +111,12 @@ class FetchCommand extends Command
     /**
      * @return array|null
      */
-    protected function getLocales()
-    {
+    protected function getLocales() {
 
         return array_keys(Administration::getLanguages());
 
 //        if ($this->locales === null) {
-//            $locales = \File::directories($this->lang_path);
+//            $locales = File::directories($this->lang_path);
 //            $this->locales = array_map([$this, 'cleanLocaleDir'], $locales);
 //        }
 //        $locales = $this->locales;
@@ -131,18 +127,16 @@ class FetchCommand extends Command
      * @param $locale
      * @param $group
      */
-    protected function validateGroup($locale, $group)
-    {
+    protected function validateGroup($locale, $group) {
         if (!$this->hasGroup($locale, $group)) {
             $this->error("The file '{$group}.php' was not found within locale '{$locale}'.");
         }
     }
 
-    protected function hasGroup($locale, $group)
-    {
+    protected function hasGroup($locale, $group) {
         $result = false;
         $file = $this->lang_path . "/{$locale}/{$group}.php";
-        if (\File::exists($file)) {
+        if (File::exists($file)) {
             $result = true;
         }
         return $result;
@@ -151,8 +145,7 @@ class FetchCommand extends Command
     /**
      * @return array|null
      */
-    protected function usableLocales()
-    {
+    protected function usableLocales() {
         $locales = [];
         if ($this->option('locale') !== null) {
             $locales[] = $this->option('locale');
@@ -165,10 +158,10 @@ class FetchCommand extends Command
 
     /**
      * @param $locale
+     *
      * @return array|null
      */
-    protected function usableGroups($locale)
-    {
+    protected function usableGroups($locale) {
         $groups = [];
         if ($this->option('group') !== null) {
             $groups[] = $this->option('group');
@@ -182,18 +175,21 @@ class FetchCommand extends Command
     /**
      * @return array|null
      */
-    protected function getGroups($locale)
-    {
+    protected function getGroups($locale): array {
         $path = $this->lang_path . "/{$locale}";
-        $groups = \File::files($path);
+
+        if (!File::exists($path)) {
+            return [];
+        }
+
+        $groups = File::files($path);
         foreach ($groups as &$group) {
             $group = $this->cleanGroupDir($group, $locale);
         }
         return $groups;
     }
 
-    protected function cleanGroupDir($item, $locale, $vendor = false, $package = false)
-    {
+    protected function cleanGroupDir($item, $locale, $vendor = false, $package = false) {
         $toCleanPath = $this->lang_path . "/{$locale}/";
 
         if ($vendor) {
@@ -215,24 +211,25 @@ class FetchCommand extends Command
      * @param $locale
      * @param $group
      */
-    protected function storeGroup($locale, $group)
-    {
-        $keys = require $this->lang_path . "/{$locale}/{$group}.php";
+    protected function storeGroup($locale, $group) {
+        $keys = require "{$group}.php";
         $keys = $this->flattenArray($keys);
 
         $updated = 0;
         $inserted = 0;
+
+        $groupName = basename($group);
+
         foreach ($keys as $name => $value) {
-            list($inserted, $updated) = $this->storeTranslation($locale, $group, $name, $value, $inserted, $updated);
+            list($inserted, $updated) = $this->storeTranslation($locale, $groupName, $name, $value, $inserted, $updated);
         }
 
-        $this->flushCache($locale, $group);
+        $this->flushCache($locale, $groupName);
 
-        $this->info("Fetched {$locale}/{$group}.php [New: {$inserted}, Updated: {$updated}]");
+        $this->info("Fetched {$group}.php [New: {$inserted}, Updated: {$updated}]");
     }
 
-    protected function flattenArray($keys, $prefix = '')
-    {
+    protected function flattenArray($keys, $prefix = '') {
         $result = [];
         foreach ($keys as $key => $value) {
             if (is_array($value)) {
@@ -245,18 +242,18 @@ class FetchCommand extends Command
     }
 
     /**
-     * @param $locale
-     * @param $group
-     * @param $name
-     * @param $value
-     * @param $inserted
-     * @param $updated
+     * @param      $locale
+     * @param      $group
+     * @param      $name
+     * @param      $value
+     * @param      $inserted
+     * @param      $updated
      * @param bool $vendor
      * @param bool $package
+     *
      * @return array
      */
-    protected function storeTranslation($locale, $group, $name, $value, $inserted, $updated, $vendor = false, $package = false, $module = false)
-    {
+    protected function storeTranslation($locale, $group, $name, $value, $inserted, $updated, $vendor = false, $package = false, $module = false) {
         $q = \DB::connection(env('DB_CONNECTION_TRANSLATIONS'))->table('translations')
             ->where('locale', $locale)
             ->where('group', $group)
@@ -300,7 +297,10 @@ class FetchCommand extends Command
             ]);
             \DB::connection(env('DB_CONNECTION_TRANSLATIONS'))->table('translations')->insert($data);
             $inserted++;
-            return array($inserted, $updated);
+            return array(
+                $inserted,
+                $updated
+            );
         } else {
 
             /*
@@ -311,7 +311,10 @@ class FetchCommand extends Command
                 $updated++;
             }
 
-            return array($inserted, $updated);
+            return array(
+                $inserted,
+                $updated
+            );
         }
     }
 
@@ -319,13 +322,11 @@ class FetchCommand extends Command
      * @param $locale
      * @param $group
      */
-    protected function flushCache($locale, $group)
-    {
-        \Cache::forget('__translations . ' . $locale . ' . ' . $group);
+    protected function flushCache($locale, $group) {
+        Cache::store('file')->forget('__translations.' . $locale . ' . ' . $group);
     }
 
-    protected function storeVendorPackage($vendor, $package)
-    {
+    protected function storeVendorPackage($vendor, $package) {
         $vendor = basename($vendor);
         $package = basename($package);
 
@@ -338,7 +339,7 @@ class FetchCommand extends Command
                 continue;
             }
 
-            $groups = \File::files($packageLocaleDir);
+            $groups = File::files($packageLocaleDir);
             foreach ($groups as &$group) {
                 $group = $this->cleanGroupDir($group, $locale, $vendor, $package);
                 $group = basename($group);
@@ -362,8 +363,7 @@ class FetchCommand extends Command
 
     }
 
-    protected function storeModule($module)
-    {
+    protected function storeModule($module) {
         $langPath = config('modules.path') . DIRECTORY_SEPARATOR . $module['name'] . DIRECTORY_SEPARATOR . 'Resources' . DIRECTORY_SEPARATOR . 'Lang' . DIRECTORY_SEPARATOR;
 
         foreach ($this->getLocales() as $locale) {
@@ -373,7 +373,7 @@ class FetchCommand extends Command
                 continue;
             }
 
-            $groups = \File::files($moduleLocaleDir);
+            $groups = File::files($moduleLocaleDir);
             foreach ($groups as &$group) {
                 $group = basename($group, '.php');
 
@@ -394,8 +394,7 @@ class FetchCommand extends Command
         }
     }
 
-    protected function cleanLocaleDir($item)
-    {
+    protected function cleanLocaleDir($item) {
         return basename($item);
     }
 
@@ -404,8 +403,7 @@ class FetchCommand extends Command
      *
      * @return array
      */
-    protected function getArguments()
-    {
+    protected function getArguments() {
         return [];
     }
 
@@ -414,11 +412,22 @@ class FetchCommand extends Command
      *
      * @return array
      */
-    protected function getOptions()
-    {
+    protected function getOptions() {
         return [
-            ['locale', 'l', InputOption::VALUE_OPTIONAL, 'Specify a locale . ', null],
-            ['group', 'g', InputOption::VALUE_OPTIONAL, 'Specify a group . ', null],
+            [
+                'locale',
+                'l',
+                InputOption::VALUE_OPTIONAL,
+                'Specify a locale . ',
+                null
+            ],
+            [
+                'group',
+                'g',
+                InputOption::VALUE_OPTIONAL,
+                'Specify a group . ',
+                null
+            ],
         ];
     }
 }

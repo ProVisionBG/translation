@@ -13,7 +13,7 @@ return [
      * This can be used to prevent lots of queries from
      * happening.
      */
-    'minimal' => false,
+    'minimal' => true,
 
     /**
      * Use locales from files as a fallback option. Be aware that

@@ -23,7 +23,10 @@
   "autoload": {
     "psr-4": {
       "ProVision\\Translation\\": "src"
-    }
+    },
+    "files": [
+      "src/Helpers.php"
+    ]
   },
   "extra": {
     "laravel": {
