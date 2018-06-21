@@ -51,7 +51,7 @@ class Translator extends \Illuminate\Translation\Translator {
         // that will be quick to spot in the UI if language keys are wrong or missing
         // from the application's language files. Otherwise we can return the line.
         if (isset($line)) {
-            if (is_string($line) && Auth::guard(config('provision_administration.guard'))->check() && !\ProVision\Administration\Facades\Administration::routeInAdministration() && Settings::get('live_translate')) {
+            if (is_string($line) && $this->isLiveTranslate()) {
                 return '<span style="border:1px dashed gray;" class="translate-item" data-namespace="' . $namespace . '" data-item="' . $item . '" data-group="' . $group . '" data-key="' . $key . '" data-locale="' . $locale . '" contenteditable="true">' . $line . '</span>';
             } else {
                 return $line;
@@ -62,7 +62,20 @@ class Translator extends \Illuminate\Translation\Translator {
             Log::debug('Missing translation key: ' . $key);
         }
 
+        if ($this->isLiveTranslate()) {
+            return '<span style="border:1px dashed gray;" class="translate-item" data-namespace="' . $namespace . '" data-item="' . $item . '" data-group="' . $group . '" data-key="' . $key . '" data-locale="' . $locale . '" contenteditable="true">' . $key . '</span>';
+        }
+
         return $key;
+    }
+
+    /**
+     * Is live translate enable
+     *
+     * @return bool
+     */
+    private function isLiveTranslate(): bool {
+        return Auth::guard(config('provision_administration.guard'))->check() && !\ProVision\Administration\Facades\Administration::routeInAdministration() && Settings::get('live_translate');
     }
 
     public function load($namespace, $group, $locale) {
