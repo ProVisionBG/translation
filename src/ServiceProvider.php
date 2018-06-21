@@ -104,6 +104,10 @@ class ServiceProvider extends \Illuminate\Translation\TranslationServiceProvider
             __DIR__ . '/../resources/lang' => resource_path('lang/vendor/provision/translation'),
         ], 'lang');
 
+        $this->publishes([
+            __DIR__ . '/../config/translation.php' => config_path('provision/translation.php'),
+        ], 'config');
+
         $this->app['translation.database']->addNamespace(null, null);
 
         \ProVision\Administration\Administration::bootModule('translation', Administration::class);
