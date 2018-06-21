@@ -7,6 +7,7 @@ use Illuminate\Support\Facades\Cache;
 use ProVision\Administration\Facades\Administration;
 use ProVision\Translation\ServiceProvider;
 use ProVision\Translation\TranslationException;
+use ProVision\Translation\Translator;
 use Stichoza\GoogleTranslate\TranslateClient;
 
 class TranslationsController extends Controller {
@@ -163,7 +164,7 @@ class TranslationsController extends Controller {
             throw new TranslationException('Database error...');
         }
 
-        Cache::store('file')->forget('__translations.' . $data['locale'] . '.' . $data['group']);
+        Translator::getCache()->flush();
 
         return 'OK';
     }
@@ -230,7 +231,7 @@ class TranslationsController extends Controller {
             throw new TranslationException('Database error...');
         }
 
-        Cache::store('file')->forget('__translations.' . $data['locale'] . '.' . $data['group']);
+        Translator::getCache()->flush();
 
         return 'OK';
     }

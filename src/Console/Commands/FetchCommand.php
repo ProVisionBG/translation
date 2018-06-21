@@ -2,9 +2,9 @@
 
 use Caffeinated\Modules\Facades\Module;
 use Illuminate\Console\Command;
-use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\File;
 use ProVision\Administration\Facades\Administration;
+use ProVision\Translation\Translator;
 use Symfony\Component\Console\Input\InputOption;
 
 class FetchCommand extends Command {
@@ -224,7 +224,7 @@ class FetchCommand extends Command {
             list($inserted, $updated) = $this->storeTranslation($locale, $groupName, $name, $value, $inserted, $updated);
         }
 
-        $this->flushCache($locale, $groupName);
+        $this->flushCache();
 
         $this->info("Fetched {$group}.php [New: {$inserted}, Updated: {$updated}]");
     }
@@ -319,11 +319,10 @@ class FetchCommand extends Command {
     }
 
     /**
-     * @param $locale
-     * @param $group
+     * Flush cache
      */
-    protected function flushCache($locale, $group) {
-        Cache::store('file')->forget('__translations.' . $locale . ' . ' . $group);
+    protected function flushCache() {
+        Translator::getCache()->flush();
     }
 
     protected function storeVendorPackage($vendor, $package) {
@@ -352,7 +351,7 @@ class FetchCommand extends Command {
                     list($inserted, $updated) = $this->storeTranslation($locale, $group, $name, $value, $inserted, $updated, $vendor, $package);
                 }
 
-                $this->flushCache($locale, $group);
+                $this->flushCache();
 
                 $this->info("Fetched {$vendor}/{$package}/{$locale}/{$group}.php [New: {$inserted}, Updated: {$updated}]");
             }
@@ -385,7 +384,7 @@ class FetchCommand extends Command {
                     list($inserted, $updated) = $this->storeTranslation($locale, $group, $name, $value, $inserted, $updated, false, false, $module['name']);
                 }
 
-                $this->flushCache($locale, $group);
+                $this->flushCache();
 
                 $this->info("Fetched Modules/{$module['name']}/Resources/Lang/{$locale}/{$group}.php [New: {$inserted}, Updated: {$updated}]");
             }

@@ -73,11 +73,11 @@ class Translator extends \Illuminate\Translation\Translator {
         // If a Namespace is give the Filesystem will be used
         // otherwise we'll use our database.
         // This will allow legacy support.
-        if (self::isNamespaced($namespace)) {
+        if (self::isNamespaced($namespace) && !\ProVision\Administration\Facades\Administration::routeInAdministration()) {
             // If debug is off then cache the result forever to ensure high performance.
             if (!Config::get('app.debug') || Config::get('provision.translation.minimal')) {
                 $that = $this;
-                $lines = Cache::store('file')->rememberForever('__translations.' . $locale . '.' . $group, function () use ($that, $locale, $group, $namespace) {
+                $lines = Translator::getCache()->rememberForever(Translator::getCacheKey($namespace, $locale, $group), function () use ($that, $locale, $group, $namespace) {
                     return $that->loadFromDatabase($namespace, $group, $locale);
                 });
             } else {
@@ -95,6 +95,29 @@ class Translator extends \Illuminate\Translation\Translator {
     }
 
     /**
+     * @return Cache
+     */
+    static function getCache() {
+        return Cache::tags('translations');
+    }
+
+    /**
+     * Ключ за кеширане на данните
+     *
+     * @param      $namespace
+     * @param      $locale
+     * @param      $group
+     *
+     * @param null $package
+     * @param null $vendor
+     *
+     * @return string
+     */
+    static function getCacheKey($namespace = null, $locale = null, $group = null, $package = null, $vendor = null): string {
+        return strtolower('__translations.' . $namespace . '.' . $package . '.' . $vendor . '.' . $locale . '.' . $group);
+    }
+
+    /**
      * @param $namespace
      * @param $group
      * @param $locale
@@ -104,7 +127,7 @@ class Translator extends \Illuminate\Translation\Translator {
     protected function loadFromDatabase($namespace, $group, $locale) {
         $lines = $this->database->load($locale, $group, $namespace);
 
-        if (count($lines) == 0 && Config::get('provision.translation.file_fallback', true)) {
+        if ($lines->count() == 0 && Config::get('provision.translation.file_fallback', true)) {
             $lines = $this->loader->load($locale, $group, $namespace);
             return $lines;
         }
