@@ -52,11 +52,14 @@ class FetchCommand extends Command {
         /*
          * vendors
          */
-        $vendors = File::directories($this->lang_path . '/vendor');
-        foreach ($vendors as $vendor) {
-            $packages = File::directories($vendor);
-            foreach ($packages as $package) {
-                $this->storeVendorPackage($vendor, $package);
+        $vendorPath = $this->lang_path . '/vendor';
+        if (File::exists($vendorPath)) {
+            $vendors = File::directories($vendorPath);
+            foreach ($vendors as $vendor) {
+                $packages = File::directories($vendor);
+                foreach ($packages as $package) {
+                    $this->storeVendorPackage($vendor, $package);
+                }
             }
         }
 
@@ -212,6 +215,12 @@ class FetchCommand extends Command {
      * @param $group
      */
     protected function storeGroup($locale, $group) {
+
+        if (File::exists($group . ".php")) {
+            $this->error(__FUNCTION__ . ': File not found: ' . $group);
+            return;
+        }
+
         $keys = require "{$group}.php";
         $keys = $this->flattenArray($keys);
 
@@ -342,7 +351,13 @@ class FetchCommand extends Command {
             foreach ($groups as &$group) {
                 $group = $this->cleanGroupDir($group, $locale, $vendor, $package);
                 $group = basename($group);
-                $keys = require $this->lang_path . "/vendor/{$vendor}/{$package}/{$locale}/{$group}.php";
+
+                $vendorLangFile = $this->lang_path . "/vendor/{$vendor}/{$package}/{$locale}/{$group}.php";
+                if (!File::exists($vendorLangFile)) {
+                    continue;
+                }
+
+                $keys = require $vendorLangFile;
                 $keys = $this->flattenArray($keys);
 
                 $updated = 0;
