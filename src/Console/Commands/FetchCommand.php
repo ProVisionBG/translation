@@ -216,7 +216,7 @@ class FetchCommand extends Command {
      */
     protected function storeGroup($locale, $group) {
 
-        if (File::exists($group . ".php")) {
+        if (!File::exists($group . ".php")) {
             $this->error(__FUNCTION__ . ': File not found: ' . $group);
             return;
         }
