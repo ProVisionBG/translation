@@ -244,7 +244,6 @@ class TranslationsController extends Controller {
         $text = TranslateClient::translate($request->input('origin'), $request->input('target'), $text);
         $text = preg_replace('/(--)(\w+)/', ':$2', $text);
         $key = $request->input('key');
-        $key = $request->input('key');
         return compact('key', 'text');
     }
 
