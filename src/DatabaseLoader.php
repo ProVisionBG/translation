@@ -33,7 +33,7 @@ class DatabaseLoader implements Loader {
             ->where('locale', $locale)
             ->where('group', $group);
 
-        return ServiceProvider::pluckOrLists($query, 'value', 'name');
+        return ServiceProvider::pluckOrLists($query, 'value', 'name')->toArray();
     }
 
     /**

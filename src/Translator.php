@@ -140,7 +140,7 @@ class Translator extends \Illuminate\Translation\Translator {
     protected function loadFromDatabase($namespace, $group, $locale) {
         $lines = $this->database->load($locale, $group, $namespace);
 
-        if ($lines->count() == 0 && Config::get('provision.translation.file_fallback', true)) {
+        if (count($lines) == 0 && Config::get('provision.translation.file_fallback', true)) {
             $lines = $this->loader->load($locale, $group, $namespace);
             return $lines;
         }
