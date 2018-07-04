@@ -262,7 +262,18 @@ class FetchCommand extends Command {
      *
      * @return array
      */
-    protected function storeTranslation($locale, $group, $name, $value, $inserted, $updated, $vendor = false, $package = false, $module = false) {
+    protected function storeTranslation($locale, $group, $name, $value, $inserted, $updated, $vendor = false, $package = false, $module = false): array {
+
+        /**
+         * Skip empty keys...
+         */
+        if (empty($name)) {
+            return [
+                0,
+                0
+            ];
+        }
+
         $q = \DB::connection(env('DB_CONNECTION_TRANSLATIONS'))->table('translations')
             ->where('locale', $locale)
             ->where('group', $group)

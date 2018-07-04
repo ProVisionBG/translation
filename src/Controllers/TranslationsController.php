@@ -3,7 +3,6 @@
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\Artisan;
-use Illuminate\Support\Facades\Cache;
 use ProVision\Administration\Facades\Administration;
 use ProVision\Translation\ServiceProvider;
 use ProVision\Translation\TranslationException;
@@ -169,6 +168,14 @@ class TranslationsController extends Controller {
         return 'OK';
     }
 
+    /**
+     * Save translation from live translate
+     *
+     * @param Request $request
+     *
+     * @return string
+     * @todo: Да се направи валидация с Request
+     */
     public function postStoreQuick(Request $request) {
 
         $inputData = $request->all();
@@ -178,20 +185,20 @@ class TranslationsController extends Controller {
             ->where('group', $inputData['data']['group'])
             ->where('name', $inputData['data']['item']);
 
-        if ($request->has('package')) {
-            $q->where('package', $request->package);
+        if ($request->has('data.package')) {
+            $q->where('package', $request->data['package']);
         } else {
             $q->whereNull('package');
         }
 
-        if ($request->has('vendor')) {
-            $q->where('vendor', $request->vendor);
+        if ($request->has('data.vendor')) {
+            $q->where('vendor', $request->data['vendor']);
         } else {
             $q->whereNull('vendor');
         }
 
-        if ($request->has('module')) {
-            $q->where('module', $request->module);
+        if ($request->has('data.namespace')) {
+            $q->where('module', ucfirst($request->data['namespace']));
         } else {
             $q->whereNull('module');
         }
@@ -206,16 +213,16 @@ class TranslationsController extends Controller {
             'updated_at' => date_create(),
         ];
 
-        if ($request->has('package')) {
-            $data['package'] = $request->package;
+        if ($request->has('data.package')) {
+            $data['package'] = $request->data['package'];
         }
 
-        if ($request->has('vendor')) {
-            $data['vendor'] = $request->vendor;
+        if ($request->has('data.vendor')) {
+            $data['vendor'] = $request->data['vendor'];
         }
 
-        if ($request->has('module')) {
-            $data['module'] = $request->module;
+        if ($request->has('data.namespace')) {
+            $data['module'] = ucfirst($request->data['namespace']);
         }
 
         if ($item === null) {
