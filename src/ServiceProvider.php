@@ -113,10 +113,10 @@ class ServiceProvider extends \Illuminate\Translation\TranslationServiceProvider
         \ProVision\Administration\Administration::bootModule('translation', Administration::class);
 
         Blade::directive('trans_strip', function ($expression) {
-            return trans_strip(str_ireplace("'", '', $expression));
+            return "<?php echo trans_strip(str_ireplace(\"'\", '', $expression)); ?>";
         });
         Blade::directive('strip_trans', function ($expression) {
-            return trans_strip(str_ireplace("'", '', $expression));
+            return "<?php echo trans_strip(str_ireplace(\"'\", '', $expression)); ?>";
         });
     }
 
